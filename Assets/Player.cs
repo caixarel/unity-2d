@@ -14,9 +14,15 @@ public class Player : MonoBehaviour
     [SerializeField] private float groundCheck;
     [SerializeField] private LayerMask whatIsGround;
 
+    [Header("Dash info")]
+    [SerializeField] private float dashDuration;
+    [SerializeField] private float dashSpeed;
+    [SerializeField] private float dashCooldown ;
+    private float dashCooldownTimer;
+    private float dashtime;
+
     private float xInput;
 
-    private int facingDirection = 1;
     private bool facingRight = true;
     private bool isGrounded;
 
@@ -37,7 +43,12 @@ public class Player : MonoBehaviour
 
         CollisionChecks();
 
-        Jump();
+
+        dashtime -= Time.deltaTime;
+        dashCooldownTimer -= Time.deltaTime;
+
+        
+  
 
         FlipController();
 
@@ -54,18 +65,35 @@ public class Player : MonoBehaviour
     private void CheckInput()
     {
         xInput = Input.GetAxisRaw("Horizontal");
+
+        Jump();
+
+
+        if (Input.GetKeyDown(KeyCode.Z) && dashCooldownTimer < 0)
+        {
+            dashCooldownTimer = dashCooldown;
+            dashtime = dashDuration;
+
+        }
     }
 
     private void Movement()
     {
-        rb.velocity = new Vector2(xInput * moveSpeed, rb.velocity.y);
+        if(dashtime > 0)
+        {
+            rb.velocity = new Vector2(xInput * dashSpeed, 0);
+        }
+        else
+        {
+            rb.velocity = new Vector2(xInput * moveSpeed, rb.velocity.y);
+        }
     }
 
     private void Jump()
     {
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
-        rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         }
     }
 
@@ -76,11 +104,11 @@ public class Player : MonoBehaviour
         anim.SetFloat("yVelocity", rb.velocity.y);
         anim.SetBool("isMoving", isMoving);
         anim.SetBool("isgrounded", isGrounded);
+        anim.SetBool("isDashing", dashtime > 0);
     }
 
     private void Flip()
     {
-        facingDirection *= -1;
         facingRight = !facingRight;
         transform.Rotate(0, 180, 0);
     }
