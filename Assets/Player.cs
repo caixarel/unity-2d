@@ -47,8 +47,8 @@ public class Player : MonoBehaviour
         dashtime -= Time.deltaTime;
         dashCooldownTimer -= Time.deltaTime;
 
-        
-  
+
+        Debug.Log("test");
 
         FlipController();
 
