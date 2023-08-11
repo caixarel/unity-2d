@@ -2,17 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Player : MonoBehaviour
+public class Player : Entity
 {
-    private  Rigidbody2D rb;
-    private Animator anim;
 
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce;
 
-    [Header("Collision info")]
-    [SerializeField] private float groundCheck;
-    [SerializeField] private LayerMask whatIsGround;
+
+    [Header("Attack info")]
+    private bool isAttacking;
+    private int comboCounter;
+    private float comboTimeWindow;
+    private float comboTime = 1.0f;
+
 
     [Header("Dash info")]
     [SerializeField] private float dashDuration;
@@ -23,53 +25,55 @@ public class Player : MonoBehaviour
 
     private float xInput;
 
-    private bool facingRight = true;
-    private bool isGrounded;
+ 
 
-
-    void Start()
+    protected override void Start()
     {
-        // Debug.Log("hello world");
-        rb = GetComponent<Rigidbody2D>();
-        anim = GetComponentInChildren<Animator>();
+        base.Start();   
     }
 
-    void Update()
+    protected override void Update()
     {
+        base.Update();
+
         Movement();
 
+
         CheckInput();
-        //Debug.Log(xInput);
-
-        CollisionChecks();
-
 
         dashtime -= Time.deltaTime;
         dashCooldownTimer -= Time.deltaTime;
-
-
-        Debug.Log("test");
+        comboTimeWindow -= Time.deltaTime;
 
         FlipController();
 
         AnimatorControllers();
     }
 
-    private void CollisionChecks()
+    public void AttackOver()
     {
-        //check if player is touching ground
-        //ground is the layer being passed to the variable what is ground
-        isGrounded = Physics2D.Raycast(transform.position, Vector2.down, groundCheck, whatIsGround);
+        isAttacking = false;
+
+        comboCounter++;
+        if (comboCounter > 2) comboCounter = 0;
+
     }
 
+  
     private void CheckInput()
     {
         xInput = Input.GetAxisRaw("Horizontal");
 
         Jump();
 
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            StartAttackEvent();
 
-        if (Input.GetKeyDown(KeyCode.Z) && dashCooldownTimer < 0)
+        }
+
+
+        if (Input.GetKeyDown(KeyCode.Z) && dashCooldownTimer < 0 && !isAttacking)
         {
             dashCooldownTimer = dashCooldown;
             dashtime = dashDuration;
@@ -77,11 +81,25 @@ public class Player : MonoBehaviour
         }
     }
 
+    private void StartAttackEvent()
+    {
+        if (!isGrounded) return;
+        if (comboTimeWindow < 0) comboCounter = 0;
+
+        isAttacking = true;
+        comboTimeWindow = comboTime;
+    }
+     
     private void Movement()
     {
-        if(dashtime > 0)
+        if (isAttacking)
         {
-            rb.velocity = new Vector2(xInput * dashSpeed, 0);
+            rb.velocity = new Vector2(0, 0);
+        }
+
+        else if(dashtime > 0)
+        {
+            rb.velocity = new Vector2(facingDir * dashSpeed, 0);
         }
         else
         {
@@ -105,13 +123,11 @@ public class Player : MonoBehaviour
         anim.SetBool("isMoving", isMoving);
         anim.SetBool("isgrounded", isGrounded);
         anim.SetBool("isDashing", dashtime > 0);
+        anim.SetBool("isAttacking", isAttacking);
+        anim.SetInteger("comboCounter", comboCounter);
     }
 
-    private void Flip()
-    {
-        facingRight = !facingRight;
-        transform.Rotate(0, 180, 0);
-    }
+   
 
     private void FlipController()
     {
@@ -126,8 +142,5 @@ public class Player : MonoBehaviour
 
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawLine(transform.position, new Vector3(transform.position.x, transform.position.y - groundCheck));
-    }
+   
 }
