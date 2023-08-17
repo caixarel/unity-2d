@@ -6,6 +6,8 @@ public class Player : Entity
 {
     [Header("Attck details")]
     public Vector2[] attackMovement;
+    public float counterAttackDuration = .2f;
+
 
     public bool isBusy { get; private set; }
 
@@ -30,7 +32,7 @@ public class Player : Entity
     public WallSlideState wallSlide { get; private set; }
     public PlayerWallJump walljump { get; private set; }
     public PlayerPrimaryAttack primaryAttack { get; private set; }
-
+    public PlayerCounterAttackState counterAttack { get; private set; }
 
     #endregion
     protected override void Awake()
@@ -45,6 +47,7 @@ public class Player : Entity
         wallSlide = new WallSlideState(this, stateMachine, "WallSlide");
         walljump = new PlayerWallJump(this,stateMachine, "Jump");
         primaryAttack = new PlayerPrimaryAttack(this, stateMachine, "Attack");
+        counterAttack = new PlayerCounterAttackState(this, stateMachine, "CounterAttack");
     }
 
     protected override void Start()

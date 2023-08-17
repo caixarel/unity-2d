@@ -7,10 +7,12 @@ public class SkeletonBattleState : EnemyState
     private Transform player;
     private EnemySkeleton enemy;
     private int moveDir;
+    private string animBoolName;
 
     public SkeletonBattleState(Enemy _enemyBase, EnemyStateMachine _stateMachine, string _animBoolName, EnemySkeleton _enemy) : base(_enemyBase, _stateMachine, _animBoolName)
     {
-         enemy = _enemy;
+        enemy = _enemy;
+        this.animBoolName = _animBoolName;
     }
 
     public override void Enter()
@@ -30,24 +32,34 @@ public class SkeletonBattleState : EnemyState
 
         if (enemy.IsPlayerDetected())
         {
-            Debug.Log(Vector2.Distance(player.transform.position, enemy.transform.position));
 
             if (enemy.IsPlayerDetected().distance < enemy.attackDistance )
             {
+
                 stateTimer = enemy.battleTime;
 
                 if(CanAttack())
-                stateMachine.ChangeState(enemy.attackState);
+                    stateMachine.ChangeState(enemy.attackState);
+
+                enemyBase.anim.SetBool(this.animBoolName, false);
+                return;
             }
+            else
+            {
+                enemyBase.anim.SetBool(this.animBoolName, true);
+            }
+
 
         }
         else
         {
+
             if (stateTimer < 0 || Vector2.Distance(player.transform.position, enemy.transform.position) > 9)
             {
                 stateMachine.ChangeState(enemy.idleState);
             }
         }
+
 
         if (player.position.x > enemy.transform.position.x) moveDir = 1;
         else if (player.position.x < enemy.transform.position.x) moveDir = -1;

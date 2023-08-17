@@ -29,7 +29,6 @@ public class SkeletonGroundedState : EnemyState
         base.Update();
         if (enemy.IsPlayerDetected() || Vector2.Distance(enemy.transform.position,player.position) < 2)
         {
-            Debug.Log("turn");
             stateMachine.ChangeState(enemy.battleState);
         }
     }
