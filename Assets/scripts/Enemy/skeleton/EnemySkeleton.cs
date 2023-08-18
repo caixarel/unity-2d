@@ -32,11 +32,6 @@ public class EnemySkeleton : Enemy
     protected override void Update()
     {
         base.Update();
-        Debug.Log(stateMachine.currentState);
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            stateMachine.ChangeState(stunnedState);
-        }
     }
 
     public override bool CanBeStunned()
