@@ -13,6 +13,7 @@ public class Sword_Skill_Controller : MonoBehaviour
 
     private bool canRotate = true;
     private bool isReturning;
+    private float freezeTimeDuration;
 
     [Header("Pierce info")]
     private int pierceAmount;
@@ -42,15 +43,23 @@ public class Sword_Skill_Controller : MonoBehaviour
         cod = GetComponent<Collider2D>();
     }
 
-    public void SetupSword(Vector2 _dir, float _graviyScale,Player _player)
+    private void DestroyMe()
+    {
+        Destroy(gameObject);
+    }
+
+    public void SetupSword(Vector2 _dir, float _graviyScale,Player _player,float _freezeTimeDuration)
     {
         player = _player;
         rb.velocity = _dir;
         rb.gravityScale = _graviyScale;
+        freezeTimeDuration = _freezeTimeDuration;
         if(pierceAmount <=0)
             anim.SetBool("Rotation", true);
 
         spinDirection = Mathf.Clamp(rb.velocity.x, -1, 1);
+
+        Invoke("DestroyMe", 7);
     }
 
     public void SetupPierce(int _pierceAmount)
@@ -106,15 +115,13 @@ public class Sword_Skill_Controller : MonoBehaviour
         {
             if (Vector2.Distance(player.transform.position, transform.position) > maxTravelDistance && !wasStopped)
             {
-                spinTimer = spinDuration;
                 StopWhenSpinning();
             }
             if (wasStopped)
             {
                 spinTimer -= Time.deltaTime;
-                Debug.Log(spinTimer);
 
-                //transform.position = Vector2.MoveTowards(transform.position, new Vector2(transform.position.x + spinDirection, transform.position.y), 1.5f * Time.deltaTime);
+                transform.position = Vector2.MoveTowards(transform.position, new Vector2(transform.position.x + spinDirection, transform.position.y), 1.5f * Time.deltaTime);
 
                 if (spinTimer < 0)
                 {
@@ -130,9 +137,11 @@ public class Sword_Skill_Controller : MonoBehaviour
 
                     foreach (var hit in colliders)
                     {
-                        if (hit.GetComponent<Enemy>() != null)
+                        Enemy enemy = hit.GetComponent<Enemy>();
+
+                        if (enemy)
                         {
-                            hit.GetComponent<Enemy>().Damage();
+                            SwordSkillDamage(enemy);
                         }
                     }
                 }
@@ -142,6 +151,8 @@ public class Sword_Skill_Controller : MonoBehaviour
 
     private void StopWhenSpinning()
     {
+        spinTimer = spinDuration;
+
         wasStopped = true;
         rb.constraints = RigidbodyConstraints2D.FreezePosition;
     }
@@ -154,7 +165,10 @@ public class Sword_Skill_Controller : MonoBehaviour
 
             if (Vector2.Distance(transform.position, enemyTarget[targetIndex].position) < .1f)
             {
-                enemyTarget[targetIndex].GetComponent<Enemy>().Damage();
+                Enemy enemy = enemyTarget[targetIndex].GetComponent<Enemy>();
+
+                SwordSkillDamage(enemy);
+
 
                 targetIndex++;
                 amountOfBounces--;
@@ -174,8 +188,25 @@ public class Sword_Skill_Controller : MonoBehaviour
     {
         if (isReturning) return;
 
-        collision.GetComponent<Enemy>()?.Damage();
+        Enemy enemy = collision.GetComponent<Enemy>();
+        if(enemy != null)
+        {
+            SwordSkillDamage(enemy);
+        }
 
+        SetupTargetsForBounce(collision);
+
+        StuckInto(collision);
+    }
+
+    private void SwordSkillDamage(Enemy enemy)
+    {
+        enemy.Damage();
+        enemy.StartCoroutine("FreezeTimeFor", freezeTimeDuration);
+    }
+
+    private void SetupTargetsForBounce(Collider2D collision)
+    {
         if (collision.GetComponent<Enemy>() != null)
         {
             if (isBoucing && enemyTarget.Count <= 0)
@@ -191,8 +222,6 @@ public class Sword_Skill_Controller : MonoBehaviour
                 }
             }
         }
-
-        StuckInto(collision);
     }
 
     private void StuckInto(Collider2D collision)
@@ -204,11 +233,13 @@ public class Sword_Skill_Controller : MonoBehaviour
             return;
         }
 
-        if (isSpinning)
+        if (isSpinning )
         {
-            spinTimer = spinDuration;
-
+            if(!wasStopped)
+            {
             StopWhenSpinning();
+
+            }
             return;
         }
         canRotate = false;

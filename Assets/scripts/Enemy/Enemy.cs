@@ -8,6 +8,7 @@ public class Enemy : Entity
     [Header("Move info")]
     public float moveSpeed;
     public float idleTime;
+    private float defaultMoveSpeed;
 
     [Header("Stunned info")]
     public float stunDuration;
@@ -27,12 +28,36 @@ public class Enemy : Entity
     {
         base.Awake();
         stateMachine = new EnemyStateMachine();
+        defaultMoveSpeed = moveSpeed;
     }
 
     protected override void Update()
     {
         base.Update();
         stateMachine.currentState.Update();
+    }
+
+    public virtual void FreezeTime(bool _timefrozen)
+    {
+        if (_timefrozen)
+        {
+            moveSpeed = 0;
+            anim.speed = 0;
+        }
+        else
+        {
+            moveSpeed = defaultMoveSpeed;
+            anim.speed = 1;
+        }
+    }
+
+    protected virtual IEnumerator FreezeTimeFor(float _seconds)
+    {
+        FreezeTime(true);
+
+        yield return new WaitForSeconds(_seconds);
+
+        FreezeTime(false);
     }
 
     public virtual void openCounterAttackWindow()
