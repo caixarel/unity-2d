@@ -11,9 +11,9 @@ TagManager:
   - ground
   - Water
   - UI
-  - 
-  - 
-  - 
+  - player
+  - enemy
+  - sword
   - 
   - 
   - 

@@ -14,6 +14,7 @@ public class Player : Entity
     [Header("Move info")]
     public float moveSpeed = 8f;
     public float jumpForce;
+    public float swordReturnImpact;
 
     [Header("Dash info")]
     public float dashSpeed;
@@ -31,10 +32,14 @@ public class Player : Entity
     public PlayerWallJump walljump { get; private set; }
     public PlayerPrimaryAttack primaryAttack { get; private set; }
     public PlayerCounterAttackState counterAttack { get; private set; }
+    public PLayerAimSwordState aimSword { get; private set; }
+    public PlayerCatchSwordState catchSword { get; private set; }
 
     #endregion
 
     public SkillManager skill { get; private set; }
+    public GameObject sword { get; private set; }
+
     protected override void Awake()
     {
         base.Awake();
@@ -48,6 +53,9 @@ public class Player : Entity
         walljump = new PlayerWallJump(this,stateMachine, "Jump");
         primaryAttack = new PlayerPrimaryAttack(this, stateMachine, "Attack");
         counterAttack = new PlayerCounterAttackState(this, stateMachine, "CounterAttack");
+
+        aimSword = new PLayerAimSwordState(this, stateMachine, "AimSword");
+        catchSword = new PlayerCatchSwordState(this, stateMachine, "CatchSword");
     }
 
     protected override void Start()
@@ -63,6 +71,17 @@ public class Player : Entity
         base.Update();
         stateMachine.currentState.Update();
         CheckForDashInput();
+    }
+
+    public void AssignNewSword(GameObject _newSword)
+    {
+        sword = _newSword;
+    }
+
+    public void ClearSword()
+    {
+        stateMachine.ChangeState(catchSword);
+        Destroy(sword);
     }
 
     //coroutine allows for some delay between lines of code
